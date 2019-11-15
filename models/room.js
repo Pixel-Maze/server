@@ -6,6 +6,7 @@ const RoomSchema = new Schema({
     minlength: [3, 'room min 3 char'],
     required: [true, 'room need name']
   },
+  create: String,
   space: []
 }, {timestamps: true})
 

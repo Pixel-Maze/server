@@ -2,8 +2,8 @@ const Room = require('../models/room');
 
 module.exports = {
   createRoom (req, res, next) {
-    const { name } = req.body;
-    Room.create({ name })
+    const { name, create } = req.body;
+    Room.create({ name, create })
       .then(room => {
         res.status(201).json({ room })
       })
@@ -28,6 +28,11 @@ module.exports = {
 
   joinRoom (req, res, next) {
     const name = req.body.name
+    const payload = {
+      name,
+      top: 0,
+      toLeft: 0
+    }
     let pass
     Room.findById(req.params.id)
       .then(room => {
@@ -38,7 +43,7 @@ module.exports = {
         if(!pass) {
           return room
         } else {
-          return Room.findByIdAndUpdate(req.params.id, {$push: {space: name}}, {new: true})
+          return Room.findByIdAndUpdate(req.params.id, {$push: {space: payload}}, {new: true})
         }
       })
       .then((room) => {
