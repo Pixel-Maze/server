@@ -31,7 +31,8 @@ module.exports = {
     const payload = {
       name,
       top: 0,
-      toLeft: 0
+      toLeft: 0,
+      deg: 0
     }
     let pass
     Room.findById(req.params.id)

@@ -11,7 +11,7 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const routes = require('./routes/index');
-const Room = require('./models/room');
+const Game = require('./models/game');
 const errorHandler = require('./middlewares/errorHandler');
 
 app.use(cors());
@@ -19,7 +19,7 @@ app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-mongoose.connect(process.env.MONGO_URL,
+mongoose.connect('mongodb://localhost/pixel-tank',
   {
     useFindAndModify: false,
     useUnifiedTopology: true,
@@ -32,9 +32,20 @@ app.use('/', routes)
 
 var name = []
 
+function newUser (data) {
+  return new Promise ((resolve, reject) => {
+    Game.create({ RoomId: data.id , players: data.player})
+    .then(game => {
+      resolve(game)
+    })
+    .catch(reject)
+  })
+}
 
+var room = []
 let count = 0;
 let enemyPositionServer = []
+
 
 io.on('connection', function (socket) {
   console.log('socket io now connect')
@@ -51,6 +62,7 @@ io.on('connection', function (socket) {
     // console.log('dalam ')
     // console.log(data)
     // socket.join(data.id)
+    room.push(data.id)
     socket.broadcast.emit('join-rooms', data)
   })
 
@@ -64,6 +76,7 @@ io.on('connection', function (socket) {
 
 
   socket.on('play-game', function (data) {
+
     io.emit('play-game', data)
   })
 
@@ -76,6 +89,9 @@ io.on('connection', function (socket) {
   socket.on('newUser', function (data) {
     count ++
     data.id = count;
+
+    
+    // newUser()
     enemyPositionServer.push(data)
 
     socket.emit('sendId', data.id)
@@ -89,8 +105,10 @@ io.on('connection', function (socket) {
         enemy.top = data.top
       }
     })
-    socket.emit('enemyPosition', enemyPositionServer)
+    socket.broadcast.emit('enemyPosition', enemyPositionServer)
     console.log(enemyPositionServer)
+
+    // socket.broadcast.emit('top', data)
   })
 
   socket.on('toLeft', function(data) {
@@ -99,8 +117,8 @@ io.on('connection', function (socket) {
         enemy.toLeft = data.toLeft
       }
     })
-    socket.emit('enemyPosition', enemyPositionServer)
-    console.log(enemyPositionServer)
+    socket.broadcast.emit('enemyPosition', enemyPositionServer)
+    // console.log(enemyPositionServer)
   })
 
   socket.on('deg', function(data) {
@@ -109,54 +127,20 @@ io.on('connection', function (socket) {
         enemy.deg = data.deg
       }
     })
-    socket.emit('enemyPosition', enemyPositionServer)
-  })
-  
-  socket.on('topPos', data => {
-    // enemyPosition.forEach(function (enemy) {
-      // if (enemy.id == data.id) {
-      //   enemy.top = data.top
-      // }
-    // })
-
-    // socket.emit('getEnemy', enemyPosition)
-    // console.log('masuk ', data)
-    io.emit('topPos', data)
+    socket.broadcast.emit('enemyPosition', enemyPositionServer)
   })
 
-  socket.on('downPos', data => {
-    // enemyPosition.forEach(function (enemy) {
-    //   if (enemy.id == data.id) {
-    //     enemy.toLeft = data.toLeft
-    //   }
-    // })
-
-    io.emit('downPos', data)
-  })
-
-  socket.on('leftPos', data => {
-    // enemyPosition.forEach(function (enemy) {
-    //   if (enemy.id == data.id) {
-    //     enemy.toLeft = data.toLeft
-    //   }
-    // })
-    // socket.emit('getEnemy', enemyPosition)
-
-    io.emit('leftPos', data)
-  })
+  // socket.on('tembak', function (data) {
+  //   enemyPositionServer.forEach(function(enemy) {
+  //     if (enemy.id == data.id) {
+  //       enemy.bullet = data.bullet
+  //     }
+  //   })
+  //   socket.broadcast.emit('fire', enemyPositionServer)
+  // })
 
 
-  socket.on('rightPos', data => {
-    // enemyPosition.forEach(function (enemy) {
-    //   if (enemy.id == data.id) {
-    //     enemy.toLeft = data.toLeft
-    //   }
-    // })
-
-    io.emit('rightPos', data)
-  })
-
-
+  io.emit('enemyPosition', enemyPositionServer)
 
 
   // socket.on('getId', () => {
@@ -187,13 +171,6 @@ io.on('connection', function (socket) {
   //   socket.broadcast.emit('deg', data)
   // })
 
-  socket.on('rotateClock', data => {
-    io.emit('rotateClock', data)
-  })
-
-  socket.on('rotateRevClock', data => {
-    io.emit('rotateClock', data)
-  })
 })
 
 // io.of('/room').on('connection', function(socket) {
