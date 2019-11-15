@@ -32,6 +32,10 @@ app.use('/', routes)
 
 var name = []
 
+
+let count = 0;
+let enemyPosition = []
+
 io.on('connection', function (socket) {
   console.log('socket io now connect')
 
@@ -53,6 +57,69 @@ io.on('connection', function (socket) {
   socket.on('leaving-room', function (data) {
     socket.broadcast.emit('leaving-rooms', data)
   })
+
+  socket.on('send', function (data) {
+    io.emit('send', data)
+  })
+
+
+
+
+  socket.on('playerId', (data) => {
+    count++
+    data.id = count
+    enemyPosition.push(data)
+    console.log(enemyPosition)
+    socket.emit('numberId', count)
+  })
+
+  socket.on('enemyPosition', data => {
+    socket.broadcast.emit('enemyPosition', data)
+  })
+
+  socket.on('getPlayerPosition', () => {
+    socket.emit('sendPlayerPosition', enemyPosition)
+  })
+  
+  socket.on('topPos', data => {
+    enemyPosition.forEach(function (enemy) {
+      if (enemy.id == data.id) {
+        enemy.top = data.top
+      }
+    })
+
+    socket.emit('getEnemy', enemyPosition)
+
+  })
+
+
+  socket.on('leftPos', data => {
+    enemyPosition.forEach(function (enemy) {
+      if (enemy.id == data.id) {
+        enemy.toLeft = data.toLeft
+      }
+    })
+    socket.emit('getEnemy', enemyPosition)
+  })
+
+  socket.on('rightPos', data => {
+    enemyPosition.forEach(function (enemy) {
+      if (enemy.id == data.id) {
+        enemy.toLeft = data.toLeft
+      }
+    })
+  })
+
+
+  socket.on('deg', data => {
+    enemyPosition.forEach(function (enemy) {
+      if (enemy.id == data.id) {
+        enemy.deg = data.deg
+      }
+    })
+    socket.emit('getEnemy', enemyPosition)
+  })
+
 })
 
 // io.of('/room').on('connection', function(socket) {
